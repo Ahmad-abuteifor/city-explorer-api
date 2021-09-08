@@ -3,5 +3,6 @@ class Movie {
     this.title=title,
     this.overview=overview,
     this.vote=vote_average
+    
   }}
   module.exports = Movie;
