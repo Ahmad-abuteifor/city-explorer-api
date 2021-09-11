@@ -1,59 +1,69 @@
 
-require('dotenv').config();
+'use strict'
+
 const axios = require('axios'); // require the package
+require('dotenv').config();
+
+
 const WEATHER_API_KEY = process.env.WEATHER_API_KEY
 const Forecast = require('../models/wether.model');
-const Cache = require('../helper/cache')
+const Cache = require('../helper/cache.helper')
 
-const cacheObject = new Cache();
+const cacheObj = new Cache();
 
 
 const wetherfun = async (request, res) => {
-  // const  city_name = request.query.city;
+  
 
-  // const lon = request.query.lon
-  // const lat = request.query.lat
-  const { lon, lat } = request.query;
+  const lon = request.query.lon
+  const lat = request.query.lat
+  
+  // const dayInMilSec = 50000;
+  // const oneDayPassed = (Date.now() - cacheObj.timeStamp) > dayInMilSec;
+  // if (oneDayPassed) {
+  
+  //   cacheObj = new Cache();
+  // }
 
 
-  const foundData = cacheObject.foreCast.find(location => location.lat === lat && location.lon === lon);
+  const foundData = cacheObj.forCast.find(location => location.lat === lat && location.lon === lon);
+
   if (foundData) {
     res.json(foundData.data)
 
   } else {
 
-    const weatherUrl = `https://api.weatherbit.io/v2.0/forecast/daily?`
+    const weatherUrl = `https://api.weatherbit.io/v2.0/forecast/daily?lat=${lat}&lon=${lon}&key=${WEATHER_API_KEY}`
 
-    try {
+    if(weatherUrl) {
 
-      const weatherUrlUsed = await axios.get(`${weatherUrl}lat=${lat}&lon=${lon}&key=${WEATHER_API_KEY}`)
+      const weatherUrlUsed = await axios.get(weatherUrl)
 
 
 
-      let data = weatherUrlUsed.data.data.map(item => {
-        return new Forecast(item.datetime, item.weather.description)
+      let newdata = weatherUrlUsed.data.data.map(item => {
+        return new Forecast(item.datetime,item.high_temp,item.low_temp, item.weather.description)
       })
 
 
 
-      cacheObject.foreCast.push(
+      cacheObj.forCast.push(
         {
           "lat": lat,
           "lon": lon,
-          "data": data
+          "data": newdata
 
 
         }
       )
 
 
-      res.json(data)
+      res.json(newdata)
 
 
     } 
-    catch (error) {
-      return error
-    }
+    else  {
+      res.json("no data")    }
 
 
 
